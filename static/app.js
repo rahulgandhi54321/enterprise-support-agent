@@ -1,3 +1,7 @@
+/* ─── FSZT Partner Support — UI Logic ─────────────────────── */
+
+const RING_CIRCUMFERENCE = 226.19;
+
 const samples = {
   billing: {
     channel: "email",
@@ -21,257 +25,471 @@ const samples = {
   },
 };
 
-const form = document.querySelector("#supportForm");
-const button = document.querySelector("#analyzeButton");
 let backendSamples = {};
 
-function setText(id, value) {
-  document.querySelector(`#${id}`).textContent = value;
+/* ─── Helpers ────────────────────────────────────────────── */
+const $ = (id) => document.getElementById(id);
+const setText = (id, val) => { const el = $(id); if (el) el.textContent = val; };
+const pretty = (v) => (!v || (typeof v === "object" && !Object.keys(v).length)) ? "{}" : JSON.stringify(v, null, 2);
+const boolText = (v) => v ? "Yes" : "No";
+
+/* ─── SVG gradient injection ─────────────────────────────── */
+function injectSvgDefs() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", "0");
+  svg.setAttribute("height", "0");
+  svg.style.position = "absolute";
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#4f46e5"/>
+        <stop offset="100%" stop-color="#7c3aed"/>
+      </linearGradient>
+    </defs>`;
+  document.body.prepend(svg);
 }
 
-function boolText(value) {
-  return value ? "Yes" : "No";
+/* ─── Confidence ring ────────────────────────────────────── */
+function setConfidence(score) {
+  const pct = Math.round(score * 100);
+  const offset = RING_CIRCUMFERENCE - (score * RING_CIRCUMFERENCE);
+  const ring = $("confidenceRing");
+  if (ring) ring.style.strokeDashoffset = offset;
+  animateNumber("confidenceValue", pct, "%");
 }
 
-function pretty(value) {
-  if (!value || (typeof value === "object" && Object.keys(value).length === 0)) {
-    return "{}";
-  }
-  return JSON.stringify(value, null, 2);
+function animateNumber(id, target, suffix = "") {
+  const el = $(id);
+  if (!el) return;
+  const start = parseInt(el.textContent) || 0;
+  const duration = 700;
+  const startTime = performance.now();
+  const ease = (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  const step = (now) => {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const val = Math.round(start + (target - start) * ease(progress));
+    el.textContent = val + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 
-function setClassByValue(elementId, value, prefix) {
-  const element = document.querySelector(`#${elementId}`);
-  element.className = "";
-  if (!value) return;
-  element.classList.add(`${prefix}-${String(value).toLowerCase().replaceAll(" ", "-")}`);
+/* ─── Badge styling ──────────────────────────────────────── */
+const PRIORITY_CLASS = {
+  "urgent": "badge-urgent",
+  "high":   "badge-high",
+  "medium": "badge-medium",
+  "low":    "badge-low",
+};
+
+const PRIORITY_ICON = {
+  "urgent": "🚨",
+  "high":   "⚠️",
+  "medium": "●",
+  "low":    "↓",
+};
+
+const SENTIMENT_CLASS = {
+  "angry":      "badge-danger",
+  "distressed": "badge-warning",
+  "negative":   "badge-warning",
+  "neutral":    "badge-neutral",
+  "positive":   "badge-success",
+};
+
+const SENTIMENT_ICON = {
+  "angry":      "😤",
+  "distressed": "😟",
+  "negative":   "😞",
+  "neutral":    "😐",
+  "positive":   "😊",
+};
+
+const ESCALATION_CLASS = {
+  "not escalated":                   "badge-low",
+  "human review required":           "badge-warning",
+  "security escalation required":    "badge-danger",
+  "legal escalation required":       "badge-urgent",
+  "approval required":               "badge-violet",
+};
+
+const ESCALATION_ICON = {
+  "not escalated":                   "✓",
+  "human review required":           "👤",
+  "security escalation required":    "🛡️",
+  "legal escalation required":       "⚖️",
+  "approval required":               "🔒",
+};
+
+function setBadge(id, text, classMap, iconMap) {
+  const el = $(id);
+  if (!el) return;
+  const key = (text || "").toLowerCase();
+  const cls = classMap[key] || "badge-neutral";
+  const icon = iconMap[key] || "";
+  el.className = `status-badge ${cls}`;
+  el.textContent = (icon ? icon + " " : "") + (text || "—");
 }
 
-function renderDecision(data) {
-  setText("decisionTitle", data.ticket_category || "Decision ready");
-  setText("confidenceValue", `${Math.round((data.confidence_score || 0) * 100)}%`);
-  setText("category", data.ticket_category || "-");
-  setText("priority", data.priority || "-");
-  setText("sentiment", data.sentiment || "-");
-  setText("escalation", data.escalation_status || "-");
-  setText("suggestedAction", data.suggested_action || "-");
-  setText("draftReply", data.draft_reply || "-");
-  setText("slaRisk", boolText(data.sla_risk));
-  setText("churnRisk", boolText(data.churn_risk));
-  setText("vipCustomer", boolText(data.vip_customer));
-  setText("fraudFlags", (data.fraud_or_spam_indicators || []).join(", ") || "None");
-  setText("internalNotes", data.internal_notes || "-");
-  setText("customerContext", pretty(data.customer_context));
-  setText("orderContext", pretty(data.order_context));
-  setText("policyContext", pretty(data.policy_context));
-  setText("auditSystem", data.audit_summary || "Logged");
-  setText("crmSystem", data.customer_context && Object.keys(data.customer_context).length ? "Profile loaded" : "No profile");
-  setText("orderSystem", data.order_context && Object.keys(data.order_context).length ? "Order verified" : "No order");
-  setText("policySystem", data.policy_context && Object.keys(data.policy_context).length ? "Policy matched" : "General SOP");
-  setText("aiStatus", data.ai_status || "unknown");
-  setText("modelUsed", data.model_used || "demo");
-  setText("latencyMs", data.latency_ms ? `${data.latency_ms} ms` : "-");
-  setText("apiUsage", pretty(data.api_usage));
-  setText("totalTokens", data.api_usage && data.api_usage.total_tokens ? data.api_usage.total_tokens : "-");
-  renderRuntimeLogs(data.runtime_logs || []);
+/* ─── Risk cells ─────────────────────────────────────────── */
+function setRisk(cellId, valId, isRisk, text) {
+  const cell = $(cellId);
+  const val = $(valId);
+  if (!cell || !val) return;
+  cell.className = "risk-cell " + (isRisk ? "risk-yes" : "risk-no");
+  val.textContent = text || boolText(isRisk);
+}
 
-  setClassByValue("priority", data.priority, "priority");
-  document.querySelector("#escalation").className =
-    data.escalation_status && data.escalation_status !== "Not escalated" ? "escalated" : "clear";
-  document.querySelector("#slaRisk").className = data.sla_risk ? "risk-yes" : "risk-no";
-  document.querySelector("#churnRisk").className = data.churn_risk ? "risk-yes" : "risk-no";
-  document.querySelector("#vipCustomer").className = data.vip_customer ? "risk-yes" : "risk-no";
+/* ─── System dots ────────────────────────────────────────── */
+function setSysDot(dotId, active) {
+  const el = $(dotId);
+  if (el) el.className = "sys-dot" + (active ? " active" : "");
+}
 
-  const toolList = document.querySelector("#toolActions");
-  toolList.innerHTML = "";
-  const actions = data.tool_actions_performed || [];
-  if (!actions.length) {
-    const item = document.createElement("li");
-    item.textContent = "No tool actions were reported for this run.";
-    toolList.appendChild(item);
+/* ─── Tool timeline ──────────────────────────────────────── */
+function renderToolTimeline(actions) {
+  const list = $("toolActions");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!actions || !actions.length) {
+    list.innerHTML = '<li class="tl-empty">No tool actions recorded.</li>';
     return;
   }
-  actions.forEach((action) => {
-    const item = document.createElement("li");
-    item.innerHTML = `<strong>${action.tool}</strong><br>${action.purpose}<br>${action.status} - ${action.detail}`;
-    toolList.appendChild(item);
+  actions.forEach((a) => {
+    const ok = a.status === "success";
+    const li = document.createElement("li");
+    li.className = "tl-item";
+    li.innerHTML = `
+      <div class="tl-dot ${ok ? "" : "failed"}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+          ${ok
+            ? '<polyline points="20 6 9 17 4 12"/>'
+            : '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'}
+        </svg>
+      </div>
+      <div class="tl-body">
+        <div class="tl-tool">${a.tool}</div>
+        <div class="tl-purpose">${a.purpose}</div>
+        <div class="tl-detail">${a.detail}</div>
+      </div>`;
+    list.appendChild(li);
   });
-  refreshOps();
 }
 
+/* ─── Audit feed ─────────────────────────────────────────── */
+function renderAuditFeed(actions) {
+  const list = $("auditEvents");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!actions || !actions.length) {
+    list.innerHTML = '<li class="tl-empty">No audit events yet.</li>';
+    return;
+  }
+  actions.slice().reverse().slice(0, 8).forEach((e) => {
+    const li = document.createElement("li");
+    const purpose = e.payload?.purpose || "Action logged";
+    const status = e.payload?.status || "recorded";
+    li.innerHTML = `<strong>${e.action}</strong><span style="color:var(--muted);font-size:11px">${purpose} · ${status}</span>`;
+    list.appendChild(li);
+  });
+}
+
+/* ─── Runtime logs ───────────────────────────────────────── */
 function renderRuntimeLogs(logs) {
-  const runtimeList = document.querySelector("#runtimeLogs");
-  runtimeList.innerHTML = "";
-  if (!logs.length) {
-    const item = document.createElement("li");
-    item.textContent = "No runtime logs yet.";
-    runtimeList.appendChild(item);
+  const list = $("runtimeLogs");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!logs || !logs.length) {
+    list.innerHTML = '<li>No runtime logs yet.</li>';
     return;
   }
   logs.forEach((line) => {
-    const item = document.createElement("li");
-    item.textContent = line;
-    runtimeList.appendChild(item);
+    const li = document.createElement("li");
+    li.textContent = line;
+    list.appendChild(li);
   });
+}
+
+/* ─── Main render ────────────────────────────────────────── */
+function renderDecision(data) {
+  setText("decisionTitle", data.ticket_category || "Decision ready");
+
+  // Confidence ring
+  setConfidence(data.confidence_score || 0);
+
+  // Category badge
+  const catBadge = $("categoryBadge");
+  if (catBadge) {
+    catBadge.style.display = "inline-flex";
+    catBadge.textContent = data.ticket_category || "";
+    catBadge.className = "chip chip-outline";
+  }
+
+  // Status badges
+  setBadge("badgePriority", data.priority, PRIORITY_CLASS, PRIORITY_ICON);
+  setBadge("badgeSentiment", data.sentiment, SENTIMENT_CLASS, SENTIMENT_ICON);
+  setBadge("badgeEscalation", data.escalation_status, ESCALATION_CLASS, ESCALATION_ICON);
+
+  // Text fields
+  setText("suggestedAction", data.suggested_action || "—");
+  setText("draftReply", data.draft_reply || "—");
+  setText("internalNotes", data.internal_notes || "No internal notes.");
+
+  // Risk cells
+  setRisk("riskSla", "slaRisk", data.sla_risk, data.sla_risk ? "Yes ⚠️" : "No");
+  setRisk("riskChurn", "churnRisk", data.churn_risk, data.churn_risk ? "Yes ⚠️" : "No");
+  setRisk("riskVip", "vipCustomer", data.vip_customer, data.vip_customer ? "Yes 👑" : "No");
+  const hasFraud = data.fraud_or_spam_indicators?.length > 0;
+  setRisk("riskFraud", "fraudFlags", hasFraud, hasFraud ? data.fraud_or_spam_indicators.join(", ") : "None");
+
+  // System dots
+  const hasCrm = data.customer_context && Object.keys(data.customer_context).length > 0;
+  const hasOrder = data.order_context && Object.keys(data.order_context).length > 0;
+  const hasPolicy = data.policy_context && Object.keys(data.policy_context).length > 0;
+  setSysDot("dotCrm", hasCrm);
+  setSysDot("dotOrder", hasOrder);
+  setSysDot("dotPolicy", hasPolicy);
+  setSysDot("dotAudit", true);
+  setText("crmSystem", hasCrm ? "Profile loaded" : "No profile");
+  setText("orderSystem", hasOrder ? "Verified" : "No record");
+  setText("policySystem", hasPolicy ? "Matched" : "General SOP");
+  setText("auditSystem", data.audit_summary || "Logged");
+
+  // Context pres
+  setText("customerContext", pretty(data.customer_context));
+  setText("orderContext", pretty(data.order_context));
+  setText("policyContext", pretty(data.policy_context));
+
+  // Tool timeline
+  renderToolTimeline(data.tool_actions_performed);
+
+  // Telemetry
+  setText("aiStatus", data.ai_status || "—");
+  setText("modelUsed", data.model_used || "—");
+  setText("latencyMs", data.latency_ms ? data.latency_ms + " ms" : "—");
+  setText("totalTokens", data.api_usage?.total_tokens ?? data.api_usage?.output_tokens ?? "—");
+  setText("apiUsage", pretty(data.api_usage));
+  renderRuntimeLogs(data.runtime_logs);
+
+  // Ops refresh
+  refreshOps();
+
+  // On mobile, auto-switch to results pane
+  if (window.innerWidth <= 768) {
+    switchPane("decision");
+  }
 }
 
 function renderError(message) {
   setText("decisionTitle", "Request failed");
   setText("suggestedAction", "Check that the server is running, then try again.");
-  setText("draftReply", message);
-  document.querySelector("#draftReply").classList.add("error");
+  const reply = $("draftReply");
+  if (reply) { reply.textContent = message; reply.classList.add("error-text"); }
 }
 
+/* ─── Health check ───────────────────────────────────────── */
 async function checkHealth() {
-  const status = document.querySelector("#healthStatus");
+  const pill = $("healthPill");
+  const status = $("healthStatus");
   try {
-    const response = await fetch("/health");
-    if (!response.ok) throw new Error("Health check failed");
-    status.textContent = "API online";
-    status.className = "status ok";
+    const res = await fetch("/health");
+    if (!res.ok) throw new Error();
+    if (pill) pill.className = "health-pill ok";
+    if (status) status.textContent = "Online";
   } catch {
-    status.textContent = "API offline";
-    status.className = "status fail";
+    if (pill) pill.className = "health-pill fail";
+    if (status) status.textContent = "Offline";
   }
 }
 
-async function loadSamples() {
-  const sampleSelect = document.querySelector("#backendSamples");
-  try {
-    const response = await fetch("/samples");
-    backendSamples = await response.json();
-    Object.entries(backendSamples).forEach(([key, sample]) => {
-      const option = document.createElement("option");
-      option.value = key;
-      option.textContent = key.replaceAll("_", " ");
-      option.dataset.channel = sample.channel;
-      sampleSelect.appendChild(option);
-    });
-  } catch {
-    sampleSelect.disabled = true;
-  }
-}
-
+/* ─── Ops summary ────────────────────────────────────────── */
 async function refreshOps() {
   try {
-    const [summaryResponse, auditResponse] = await Promise.all([
+    const [summaryRes, auditRes] = await Promise.all([
       fetch("/ops/summary"),
       fetch("/audit/recent?limit=8"),
     ]);
-    const summary = await summaryResponse.json();
-    const audit = await auditResponse.json();
+    const summary = await summaryRes.json();
+    const audit = await auditRes.json();
     setText("opsSummary", pretty(summary));
-
-    const auditList = document.querySelector("#auditEvents");
-    auditList.innerHTML = "";
-    if (!audit.actions || !audit.actions.length) {
-      const item = document.createElement("li");
-      item.textContent = "No audit events yet.";
-      auditList.appendChild(item);
-      return;
-    }
-    audit.actions.slice().reverse().forEach((event) => {
-      const item = document.createElement("li");
-      const purpose = event.payload && event.payload.purpose ? event.payload.purpose : "Action logged";
-      const status = event.payload && event.payload.status ? event.payload.status : "recorded";
-      item.innerHTML = `<strong>${event.action}</strong><br>${purpose}<br>${status}`;
-      auditList.appendChild(item);
-    });
+    renderAuditFeed(audit.actions);
   } catch {
     setText("opsSummary", "{}");
   }
 }
 
-document.querySelectorAll("[data-sample]").forEach((sampleButton) => {
-  sampleButton.addEventListener("click", () => {
-    const key = sampleButton.dataset.sample;
-    const sample = samples[key];
-    if (!sample) return;
-    document.querySelector("#channel").value = sample.channel;
-    document.querySelector("#customerId").value = sample.customer_id;
-    document.querySelector("#message").value = sample.message;
-  });
-});
-
-document.querySelector("#backendSamples").addEventListener("change", (event) => {
-  const sample = backendSamples[event.target.value];
-  if (!sample) return;
-  document.querySelector("#channel").value = sample.channel;
-  document.querySelector("#customerId").value = sample.customer_id || "";
-  document.querySelector("#message").value = sample.message;
-});
-
-document.querySelector("#settingsButton").addEventListener("click", () => {
-  const panel = document.querySelector("#settingsPanel");
-  const button = document.querySelector("#settingsButton");
-  const isOpen = !panel.hidden;
-  panel.hidden = isOpen;
-  button.setAttribute("aria-expanded", String(!isOpen));
-});
-
-document.querySelector("#closeSettings").addEventListener("click", () => {
-  document.querySelector("#settingsPanel").hidden = true;
-  document.querySelector("#settingsButton").setAttribute("aria-expanded", "false");
-});
-
-async function runDiagnostics(endpoint, buttonId) {
-  const button = document.querySelector(`#${buttonId}`);
-  const original = button.textContent;
-  button.disabled = true;
-  button.textContent = "Checking…";
-  setText("aiDiagnostics", `Running ${endpoint} diagnostics…`);
+/* ─── Load backend samples ───────────────────────────────── */
+async function loadSamples() {
+  const sel = $("backendSamples");
   try {
-    const response = await fetch(`/ops/${endpoint}-diagnostics`);
-    const data = await response.json();
-    setText("aiDiagnostics", pretty(data));
-  } catch (error) {
-    setText("aiDiagnostics", `Diagnostics failed: ${error.message}`);
-  } finally {
-    button.disabled = false;
-    button.textContent = original;
+    const res = await fetch("/samples");
+    backendSamples = await res.json();
+    Object.entries(backendSamples).forEach(([key, sample]) => {
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = key.replaceAll("_", " ");
+      sel.appendChild(opt);
+    });
+  } catch {
+    if (sel) sel.disabled = true;
   }
 }
 
-document.querySelector("#runOpenaiDiagnostics").addEventListener("click", () => runDiagnostics("openai", "runOpenaiDiagnostics"));
-document.querySelector("#runCohereDiagnostics").addEventListener("click", () => runDiagnostics("cohere", "runCohereDiagnostics"));
+/* ─── Loading state ──────────────────────────────────────── */
+function setLoading(on) {
+  const btn = $("analyzeButton");
+  const label = $("submitLabel");
+  if (!btn || !label) return;
+  btn.disabled = on;
+  label.textContent = on ? "Analyzing…" : "Analyze request";
+  if (on) {
+    setText("decisionTitle", "Analyzing…");
+    const ring = $("confidenceRing");
+    if (ring) ring.style.strokeDashoffset = RING_CIRCUMFERENCE;
+    const reply = $("draftReply");
+    if (reply) reply.classList.remove("error-text");
+  }
+}
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  document.querySelector("#draftReply").classList.remove("error");
-  const mode = new FormData(form).get("mode");
-  const payload = {
-    channel: document.querySelector("#channel").value,
-    customer_id: document.querySelector("#customerId").value || null,
-    message: document.querySelector("#message").value,
-  };
-
-  button.disabled = true;
-  button.textContent = mode === "analyze" ? "Running live AI" : "Analyzing";
-  setText("decisionTitle", "Analyzing request");
-  setText("aiStatus", mode === "analyze" ? "live_ai_running" : "demo_running");
-  renderRuntimeLogs(["Request submitted.", mode === "analyze" ? "Calling live AI route." : "Running deterministic demo tools."]);
-
+/* ─── Diagnostics ────────────────────────────────────────── */
+async function runDiagnostics(endpoint, buttonId) {
+  const btn = $(buttonId);
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Checking…";
+  setText("aiDiagnostics", `Running ${endpoint} diagnostics…`);
   try {
-    const response = await fetch(`/${mode}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || "Analysis failed");
-    renderDecision(data);
-  } catch (error) {
-    renderError(error.message);
+    const res = await fetch(`/ops/${endpoint}-diagnostics`);
+    const data = await res.json();
+    setText("aiDiagnostics", pretty(data));
+  } catch (e) {
+    setText("aiDiagnostics", `Failed: ${e.message}`);
   } finally {
-    button.disabled = false;
-    button.textContent = "Analyze request";
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+/* ─── Mobile tab switching ───────────────────────────────── */
+function switchPane(name) {
+  document.querySelectorAll(".pane").forEach((p) => p.classList.remove("pane-active"));
+  document.querySelectorAll(".mobile-tab").forEach((t) => t.classList.remove("active"));
+  const pane = name === "request" ? $("paneRequest") : $("paneDecision");
+  const tab = name === "request" ? $("tabRequest") : $("tabDecision");
+  if (pane) pane.classList.add("pane-active");
+  if (tab) tab.classList.add("active");
+}
+
+/* ─── Settings panel ─────────────────────────────────────── */
+function toggleSettings() {
+  const panel = $("settingsPanel");
+  const btn = $("settingsButton");
+  if (!panel) return;
+  const open = !panel.hidden;
+  panel.hidden = open;
+  btn.classList.toggle("active", !open);
+  btn.setAttribute("aria-expanded", String(!open));
+}
+
+/* ─── Event wiring ───────────────────────────────────────── */
+
+// Sample chips
+document.querySelectorAll("[data-sample]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.sample;
+    const s = samples[key];
+    if (!s) return;
+    const ch = $("channel"); if (ch) ch.value = s.channel;
+    const cu = $("customerId"); if (cu) cu.value = s.customer_id;
+    const mg = $("message"); if (mg) mg.value = s.message;
+  });
+});
+
+// Backend samples dropdown
+const backendSel = $("backendSamples");
+if (backendSel) {
+  backendSel.addEventListener("change", (e) => {
+    const s = backendSamples[e.target.value];
+    if (!s) return;
+    const ch = $("channel"); if (ch) ch.value = s.channel;
+    const cu = $("customerId"); if (cu) cu.value = s.customer_id || "";
+    const mg = $("message"); if (mg) mg.value = s.message;
+  });
+}
+
+// Settings open/close
+const settingsBtn = $("settingsButton");
+if (settingsBtn) settingsBtn.addEventListener("click", toggleSettings);
+const closeBtn = $("closeSettings");
+if (closeBtn) closeBtn.addEventListener("click", toggleSettings);
+
+// Close settings on outside click
+document.addEventListener("click", (e) => {
+  const panel = $("settingsPanel");
+  const btn = $("settingsButton");
+  if (panel && !panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) {
+    toggleSettings();
   }
 });
 
-document.querySelector("#jumpToResults").addEventListener("click", () => {
-  document.querySelector(".decision-pane").scrollIntoView({ behavior: "smooth", block: "start" });
+// Diagnostics
+$("runOpenaiDiagnostics")?.addEventListener("click", () => runDiagnostics("openai", "runOpenaiDiagnostics"));
+$("runCohereDiagnostics")?.addEventListener("click", () => runDiagnostics("cohere", "runCohereDiagnostics"));
+
+// Jump to results (mobile)
+$("jumpToResults")?.addEventListener("click", () => {
+  if (window.innerWidth <= 768) {
+    switchPane("decision");
+  } else {
+    $("paneDecision")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 });
 
+// Mobile tabs
+$("tabRequest")?.addEventListener("click", () => switchPane("request"));
+$("tabDecision")?.addEventListener("click", () => switchPane("decision"));
+
+// Form submit
+const form = document.querySelector("#supportForm");
+if (form) {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const mode = new FormData(form).get("mode");
+    const payload = {
+      channel: $("channel")?.value,
+      customer_id: $("customerId")?.value || null,
+      message: $("message")?.value,
+    };
+
+    setLoading(true);
+    renderRuntimeLogs(["Request submitted.", mode === "analyze" ? "Calling live AI route." : "Running deterministic demo."]);
+
+    try {
+      const res = await fetch(`/${mode}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Analysis failed");
+      renderDecision(data);
+    } catch (err) {
+      renderError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  });
+}
+
+/* ─── Init ───────────────────────────────────────────────── */
+
+// On mobile, show request pane by default
+if (window.innerWidth <= 768) {
+  switchPane("request");
+}
+
+injectSvgDefs();
 checkHealth();
 loadSamples();
 refreshOps();
