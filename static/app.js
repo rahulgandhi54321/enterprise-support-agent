@@ -396,13 +396,24 @@ function switchPane(name) {
 
 /* ─── Settings panel ─────────────────────────────────────── */
 function toggleSettings() {
-  const panel = $("settingsPanel");
-  const btn = $("settingsButton");
+  const panel    = $("settingsPanel");
+  const backdrop = $("settingsBackdrop");
+  const btn      = $("settingsButton");
   if (!panel) return;
-  const open = !panel.hidden;
-  panel.hidden = open;
-  btn.classList.toggle("active", !open);
-  btn.setAttribute("aria-expanded", String(!open));
+
+  const opening = panel.hidden;
+  panel.hidden    = !opening;
+  backdrop.hidden = !opening;
+  btn.classList.toggle("active", opening);
+  btn.setAttribute("aria-expanded", String(opening));
+
+  // Prevent body scroll while sheet is open on mobile
+  document.body.style.overflow = (opening && window.innerWidth <= 768) ? "hidden" : "";
+}
+
+function closeSettings() {
+  const panel = $("settingsPanel");
+  if (panel && !panel.hidden) toggleSettings();
 }
 
 /* ─── Event wiring ───────────────────────────────────────── */
@@ -435,15 +446,30 @@ if (backendSel) {
 const settingsBtn = $("settingsButton");
 if (settingsBtn) settingsBtn.addEventListener("click", toggleSettings);
 const closeBtn = $("closeSettings");
-if (closeBtn) closeBtn.addEventListener("click", toggleSettings);
+if (closeBtn) closeBtn.addEventListener("click", closeSettings);
 
-// Close settings on outside click
+// Backdrop tap closes panel
+$("settingsBackdrop")?.addEventListener("click", closeSettings);
+
+// Desktop: close on outside click (backdrop handles mobile)
 document.addEventListener("click", (e) => {
   const panel = $("settingsPanel");
-  const btn = $("settingsButton");
-  if (panel && !panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) {
-    toggleSettings();
+  const btn   = $("settingsButton");
+  const backdrop = $("settingsBackdrop");
+  if (
+    panel && !panel.hidden &&
+    !panel.contains(e.target) &&
+    !btn.contains(e.target) &&
+    !backdrop?.contains(e.target) &&
+    window.innerWidth > 768
+  ) {
+    closeSettings();
   }
+});
+
+// Escape key closes panel
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeSettings();
 });
 
 // Diagnostics

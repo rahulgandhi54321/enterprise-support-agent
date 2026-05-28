@@ -28,43 +28,46 @@
         <button class="gear-btn" id="settingsButton" type="button" aria-expanded="false" aria-controls="settingsPanel" title="Runtime telemetry">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
-
-        <!-- Settings panel -->
-        <aside class="settings-panel" id="settingsPanel" hidden>
-          <div class="settings-head">
-            <div>
-              <div class="settings-eyebrow">Runtime telemetry</div>
-              <div class="settings-title">Live AI details</div>
-            </div>
-            <button class="close-btn" id="closeSettings" type="button">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          </div>
-          <div class="telemetry-grid">
-            <div class="telemetry-cell"><div class="tc-label">AI status</div><div class="tc-value" id="aiStatus">—</div></div>
-            <div class="telemetry-cell"><div class="tc-label">Model</div><div class="tc-value" id="modelUsed">—</div></div>
-            <div class="telemetry-cell"><div class="tc-label">Latency</div><div class="tc-value" id="latencyMs">—</div></div>
-            <div class="telemetry-cell"><div class="tc-label">Tokens</div><div class="tc-value" id="totalTokens">—</div></div>
-          </div>
-          <div class="settings-section">
-            <div class="section-label">API usage</div>
-            <pre id="apiUsage">{}</pre>
-          </div>
-          <div class="settings-section">
-            <div class="section-label">Agent logs</div>
-            <ul id="runtimeLogs" class="log-list"><li>No run yet.</li></ul>
-          </div>
-          <div class="settings-section">
-            <div class="section-label">Diagnostics</div>
-            <div class="diag-buttons">
-              <button class="diag-btn" id="runOpenaiDiagnostics">Test OpenAI</button>
-              <button class="diag-btn" id="runCohereDiagnostics">Test Cohere</button>
-            </div>
-            <pre id="aiDiagnostics">{}</pre>
-          </div>
-        </aside>
       </div>
     </header>
+
+    <!-- ── Settings panel (body-level so position:fixed works on mobile) ── -->
+    <div class="settings-backdrop" id="settingsBackdrop" hidden></div>
+    <aside class="settings-panel" id="settingsPanel" hidden>
+      <!-- Drag handle (mobile) -->
+      <div class="sheet-handle"></div>
+      <div class="settings-head">
+        <div>
+          <div class="settings-eyebrow">Runtime telemetry</div>
+          <div class="settings-title">Live AI details</div>
+        </div>
+        <button class="close-btn" id="closeSettings" type="button" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="telemetry-grid">
+        <div class="telemetry-cell"><div class="tc-label">AI status</div><div class="tc-value" id="aiStatus">—</div></div>
+        <div class="telemetry-cell"><div class="tc-label">Model</div><div class="tc-value" id="modelUsed">—</div></div>
+        <div class="telemetry-cell"><div class="tc-label">Latency</div><div class="tc-value" id="latencyMs">—</div></div>
+        <div class="telemetry-cell"><div class="tc-label">Tokens</div><div class="tc-value" id="totalTokens">—</div></div>
+      </div>
+      <div class="settings-section">
+        <div class="section-label">API usage</div>
+        <pre id="apiUsage">{}</pre>
+      </div>
+      <div class="settings-section">
+        <div class="section-label">Agent logs</div>
+        <ul id="runtimeLogs" class="log-list"><li>No run yet.</li></ul>
+      </div>
+      <div class="settings-section">
+        <div class="section-label">Diagnostics</div>
+        <div class="diag-buttons">
+          <button class="diag-btn" id="runOpenaiDiagnostics">Test OpenAI</button>
+          <button class="diag-btn" id="runCohereDiagnostics">Test Cohere</button>
+        </div>
+        <pre id="aiDiagnostics">{}</pre>
+      </div>
+    </aside>
 
     <!-- ── Main workspace ─────────────────────────────── -->
     <main class="workspace">

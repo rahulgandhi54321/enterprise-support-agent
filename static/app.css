@@ -180,22 +180,38 @@ a { color: inherit; text-decoration: none; }
 .gear-btn:hover  { background: rgba(255,255,255,0.13); color: #fff; }
 .gear-btn.active { background: rgba(79,70,229,0.35); color: #fff; border-color: rgba(79,70,229,0.5); }
 
+/* ─── Settings backdrop ──────────────────────────────── */
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 298;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: fadeIn 0.2s var(--ease);
+}
+
 /* ─── Settings panel ─────────────────────────────────── */
+/* Body-level element — not nested in topbar — so position:fixed
+   always anchors to the viewport, never to a transformed parent. */
 .settings-panel {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: min(460px, calc(100vw - 20px));
-  max-height: calc(100dvh - 100px);
+  position: fixed;
+  top: calc(var(--nav-h) + 10px);
+  right: 24px;
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100dvh - var(--nav-h) - 30px);
   overflow-y: auto;
   border-radius: var(--r-lg);
   background: var(--surface);
   border: 1px solid var(--border-strong);
   box-shadow: var(--shadow-lg);
   padding: 20px;
-  z-index: 200;
+  z-index: 299;
   scrollbar-width: thin;
+  animation: fadeIn 0.18s var(--ease);
 }
+
+.sheet-handle { display: none; }
 
 .settings-head {
   display: flex;
@@ -937,14 +953,37 @@ select.field-input {
 
   .audit-feed li { flex-direction: column; align-items: flex-start; gap: 2px; }
 
+  /* ── Bottom sheet on mobile ── */
   .settings-panel {
-    position: fixed;
-    top: auto; bottom: 0; left: 0; right: 0;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width: 100%;
-    max-height: 84dvh;
-    border-radius: var(--r-xl) var(--r-xl) 0 0;
-    border-bottom: none;
-    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    max-height: 82dvh;
+    border-radius: 20px 20px 0 0;
+    border: none;
+    border-top: 1px solid var(--border-strong);
+    padding: 0 20px calc(24px + env(safe-area-inset-bottom));
+    animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Drag handle */
+  .sheet-handle {
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--subtle);
+    border-radius: 2px;
+    margin: 14px auto 18px;
+    flex-shrink: 0;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
   }
 
   .site-footer {
