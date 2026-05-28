@@ -1,4 +1,15 @@
-/* ─── FSZT Partner Support — UI Logic ─────────────────────── */
+/* ─── FSZT AI Customer Success Agent — UI Logic ────────────── */
+
+/* ─── LinkedIn deep link ─────────────────────────────────── */
+function openLinkedIn(e) {
+  e.preventDefault();
+  // Try to open the LinkedIn app first
+  window.location.href = 'linkedin://in/rahul-gandhi-72b9181a7';
+  // Fall back to web profile after 600ms if app didn't intercept
+  setTimeout(() => {
+    window.open('https://www.linkedin.com/in/rahul-gandhi-72b9181a7/', '_blank');
+  }, 600);
+}
 
 const RING_CIRCUMFERENCE = 226.19;
 
