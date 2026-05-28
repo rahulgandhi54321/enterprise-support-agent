@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FSZT Partners — Client Support</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">AI-First Consulting · Strategy That Ships</p>
+          <h1>FSZT Partner Support</h1>
+        </div>
+        <div class="top-right">
+          <div class="health-wrap">
+            <span class="pulse" aria-hidden="true"></span>
+            <div class="status" id="healthStatus">Checking API</div>
+          </div>
+          <button class="settings-button" id="settingsButton" type="button" aria-expanded="false" aria-controls="settingsPanel" title="Runtime telemetry">⚙</button>
+          <aside class="settings-panel" id="settingsPanel" hidden>
+            <div class="settings-head">
+              <div>
+                <p class="eyebrow">Runtime telemetry</p>
+                <h2>Live AI details</h2>
+              </div>
+              <button class="icon-button" id="closeSettings" type="button" title="Close">×</button>
+            </div>
+            <div class="settings-grid">
+              <div><span>AI status</span><strong id="aiStatus">Waiting</strong></div>
+              <div><span>Model</span><strong id="modelUsed">-</strong></div>
+              <div><span>Latency</span><strong id="latencyMs">-</strong></div>
+              <div><span>Total tokens</span><strong id="totalTokens">-</strong></div>
+            </div>
+            <section>
+              <h3>API usage</h3>
+              <pre id="apiUsage">{}</pre>
+            </section>
+            <section>
+              <h3>Runtime logs</h3>
+              <ul id="runtimeLogs" class="audit-list">
+                <li>No run yet.</li>
+              </ul>
+            </section>
+            <section>
+              <h3>AI diagnostics</h3>
+              <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+                <button class="secondary" id="runOpenaiDiagnostics" type="button">Test OpenAI</button>
+                <button class="secondary" id="runCohereDiagnostics" type="button">Test Cohere</button>
+              </div>
+              <pre id="aiDiagnostics">{}</pre>
+            </section>
+          </aside>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="FSZT client support console">
+        <div class="request-pane">
+          <div class="panel-title">
+            <div>
+              <p class="eyebrow">Intake</p>
+              <h2>Incoming request</h2>
+            </div>
+            <span class="badge">Multi-channel</span>
+          </div>
+
+          <form id="supportForm" class="form">
+            <div class="row">
+              <label>
+                Channel
+                <select id="channel" name="channel">
+                  <option value="email">Email</option>
+                  <option value="chat">Chat</option>
+                  <option value="crm_ticket">CRM ticket</option>
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="slack">Slack</option>
+                  <option value="support_portal">Support portal</option>
+                </select>
+              </label>
+
+              <label>
+                Client
+                <select id="customerId" name="customer_id">
+                  <option value="cli_enterprise_001">Sarah Chen — Universal Music Group</option>
+                  <option value="cli_growth_002">Dr. Marcus Reid — Remoni Health</option>
+                  <option value="cli_starter_003">Priya Nair — EduBridge Academy</option>
+                  <option value="">Unknown client</option>
+                </select>
+              </label>
+            </div>
+
+            <label>
+              Client message
+              <textarea id="message" name="message" rows="9">We received two invoices for engagement ORD-1001 this month and nobody has responded. Fix this today or we are escalating to legal.</textarea>
+            </label>
+
+            <div class="sample-strip" aria-label="Sample requests">
+              <button type="button" data-sample="billing">Billing dispute</button>
+              <button type="button" data-sample="technical">Labs outage</button>
+              <button type="button" data-sample="access">Course access</button>
+              <button type="button" data-sample="legal">Legal complaint</button>
+            </div>
+
+            <label>
+              Saved samples
+              <select id="backendSamples">
+                <option value="">Load a saved sample</option>
+              </select>
+            </label>
+
+            <div class="actions">
+              <div class="mode-toggle" role="group" aria-label="Analysis mode">
+                <label><input type="radio" name="mode" value="analyze" checked /> Live AI</label>
+                <label><input type="radio" name="mode" value="triage-demo" /> Demo</label>
+              </div>
+              <button class="primary" type="submit" id="analyzeButton">Analyze request</button>
+            </div>
+            <button id="jumpToResults" type="button" aria-label="Jump to results">↓ See Results</button>
+          </form>
+        </div>
+
+        <div class="decision-pane" aria-live="polite">
+          <div class="decision-header">
+            <div>
+              <p class="eyebrow">Ticket decision</p>
+              <h2 id="decisionTitle">Ready</h2>
+            </div>
+            <div class="confidence">
+              <span id="confidenceValue">0%</span>
+              <small>confidence</small>
+            </div>
+          </div>
+
+          <div class="metrics">
+            <div>
+              <span>Category</span>
+              <strong id="category">Awaiting input</strong>
+            </div>
+            <div>
+              <span>Priority</span>
+              <strong id="priority">-</strong>
+            </div>
+            <div>
+              <span>Sentiment</span>
+              <strong id="sentiment">-</strong>
+            </div>
+            <div>
+              <span>Escalation</span>
+              <strong id="escalation">-</strong>
+            </div>
+          </div>
+
+          <section class="output-section">
+            <h3>Suggested action</h3>
+            <p id="suggestedAction">Submit a request to see the operator recommendation.</p>
+          </section>
+
+          <section class="output-section reply">
+            <h3>Draft reply</h3>
+            <p id="draftReply">The client-facing reply will appear here.</p>
+          </section>
+
+          <section class="systems">
+            <div><span>CRM</span><strong id="crmSystem">Ready</strong></div>
+            <div><span>Engagements</span><strong id="orderSystem">Ready</strong></div>
+            <div><span>Policy</span><strong id="policySystem">Ready</strong></div>
+            <div><span>Audit</span><strong id="auditSystem">Ready</strong></div>
+          </section>
+
+          <section class="risk-grid">
+            <div><span>SLA risk</span><strong id="slaRisk">-</strong></div>
+            <div><span>Churn risk</span><strong id="churnRisk">-</strong></div>
+            <div><span>Enterprise</span><strong id="vipCustomer">-</strong></div>
+            <div><span>Fraud flags</span><strong id="fraudFlags">-</strong></div>
+          </section>
+
+          <section class="context-grid">
+            <div class="output-section">
+              <h3>Client context</h3>
+              <pre id="customerContext">{}</pre>
+            </div>
+            <div class="output-section">
+              <h3>Engagement context</h3>
+              <pre id="orderContext">{}</pre>
+            </div>
+            <div class="output-section">
+              <h3>Policy context</h3>
+              <pre id="policyContext">{}</pre>
+            </div>
+            <div class="output-section">
+              <h3>Internal notes</h3>
+              <p id="internalNotes">No internal notes yet.</p>
+            </div>
+          </section>
+
+          <section class="output-section">
+            <h3>Tool actions</h3>
+            <ul id="toolActions" class="tool-list">
+              <li>No tools run yet.</li>
+            </ul>
+          </section>
+
+          <section class="ops-grid">
+            <div class="output-section">
+              <h3>Operations summary</h3>
+              <pre id="opsSummary">{}</pre>
+            </div>
+            <div class="output-section">
+              <h3>Recent audit events</h3>
+              <ul id="auditEvents" class="audit-list">
+                <li>No audit events yet.</li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </section>
+      <footer class="creator">FSZT Partners Inc. &nbsp;·&nbsp; Strategy That Ships &nbsp;·&nbsp; <a href="mailto:hello@fszt.partners">hello@fszt.partners</a></footer>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

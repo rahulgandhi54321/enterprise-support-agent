@@ -1,0 +1,22 @@
+{
+  "billing_dispute": {
+    "channel": "email",
+    "customer_id": "cli_enterprise_001",
+    "message": "We received two invoices for engagement ORD-1001 this month and nobody has responded to my emails. Fix this today or we are escalating to our legal team and terminating the contract."
+  },
+  "labs_technical": {
+    "channel": "chat",
+    "customer_id": "cli_growth_002",
+    "message": "The AI-First Call Center agent your team deployed is throwing a 500 error on every inbound call routing request. Our contact centre is blocked. This needs to be resolved immediately."
+  },
+  "course_access": {
+    "channel": "whatsapp",
+    "customer_id": "cli_starter_003",
+    "message": "I lost access to the AI Native Consultants course portal after our company switched SSO providers. I need this restored urgently — our cohort starts tomorrow."
+  },
+  "security_escalation": {
+    "channel": "support_portal",
+    "customer_id": "cli_enterprise_001",
+    "message": "This is a formal legal complaint. The Discovery Agent your team deployed at our site exposed client PII in its outputs last night. We need your legal and security teams to respond within the hour."
+  }
+}
