@@ -251,9 +251,9 @@ function renderDecision(data) {
   setSysDot("dotOrder", hasOrder);
   setSysDot("dotPolicy", hasPolicy);
   setSysDot("dotAudit", true);
-  setText("crmSystem", hasCrm ? "Profile loaded" : "No profile");
-  setText("orderSystem", hasOrder ? "Verified" : "No record");
-  setText("policySystem", hasPolicy ? "Matched" : "General SOP");
+  setText("crmSystem", hasCrm ? "Account loaded" : "No profile");
+  setText("orderSystem", hasOrder ? "Engagement verified" : "No record");
+  setText("policySystem", hasPolicy ? "Playbook matched" : "General playbook");
   setText("auditSystem", data.audit_summary || "Logged");
 
   // Context pres
@@ -342,9 +342,9 @@ function setLoading(on) {
   const label = $("submitLabel");
   if (!btn || !label) return;
   btn.disabled = on;
-  label.textContent = on ? "Analyzing…" : "Analyze request";
+  label.textContent = on ? "Running AI agent…" : "Run AI agent";
   if (on) {
-    setText("decisionTitle", "Analyzing…");
+    setText("decisionTitle", "AI agent working…");
     const ring = $("confidenceRing");
     if (ring) ring.style.strokeDashoffset = RING_CIRCUMFERENCE;
     const reply = $("draftReply");
@@ -463,7 +463,7 @@ if (form) {
     };
 
     setLoading(true);
-    renderRuntimeLogs(["Request submitted.", mode === "analyze" ? "Calling live AI route." : "Running deterministic demo."]);
+    renderRuntimeLogs(["Signal received.", mode === "analyze" ? "Calling live AI agent route." : "Running demo mode — no AI calls."]);
 
     try {
       const res = await fetch(`/${mode}`, {
