@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: fszt-partner-support
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py --host 0.0.0.0
+    envVars:
+      - key: AI_PROVIDER
+        value: cohere
+      - key: COHERE_MODEL
+        value: command-a-03-2025
+      - key: COHERE_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: REFUND_APPROVAL_THRESHOLD
+        value: "5000"
+      - key: CONFIDENCE_THRESHOLD
+        value: "0.75"
