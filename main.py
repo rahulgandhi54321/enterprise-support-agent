@@ -41,7 +41,7 @@ def app_js() -> FileResponse:
     return FileResponse(ROOT / "static" / "app.js", media_type="application/javascript")
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health() -> Dict[str, str]:
     return {"status": "ok"}
 
