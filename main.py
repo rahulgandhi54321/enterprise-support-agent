@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 import cohere
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from openai import OpenAI, OpenAIError
 
 from support_operator.audit import read_recent_actions
@@ -26,9 +26,9 @@ app = FastAPI(title="Enterprise Support Operator", version="0.2.0")
 ROOT = Path(__file__).resolve().parent
 
 
-@app.get("/", response_class=FileResponse)
-def console() -> FileResponse:
-    return FileResponse(ROOT / "static" / "index.html")
+@app.get("/", response_class=HTMLResponse)
+def console() -> HTMLResponse:
+    return HTMLResponse(content=(ROOT / "static" / "index.html").read_text(encoding="utf-8"))
 
 
 @app.get("/app.css", response_class=FileResponse)
