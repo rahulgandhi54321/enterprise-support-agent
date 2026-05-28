@@ -34,7 +34,6 @@
     <!-- ── Settings panel (body-level so position:fixed works on mobile) ── -->
     <div class="settings-backdrop" id="settingsBackdrop" hidden></div>
     <aside class="settings-panel" id="settingsPanel" hidden>
-      <!-- Drag handle (mobile) -->
       <div class="sheet-handle"></div>
       <div class="settings-head">
         <div>
@@ -45,12 +44,25 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
+
+      <!-- Active AI engine -->
+      <div class="active-provider">
+        <div class="ap-label">Active AI engine</div>
+        <div class="ap-row">
+          <span class="ap-badge">● Cohere</span>
+          <span class="ap-model">command-a-03-2025</span>
+        </div>
+        <p class="ap-note">Cohere powers all live agent runs. Other providers are available for diagnostics only.</p>
+      </div>
+
+      <!-- Last run telemetry -->
       <div class="telemetry-grid">
         <div class="telemetry-cell"><div class="tc-label">AI status</div><div class="tc-value" id="aiStatus">—</div></div>
         <div class="telemetry-cell"><div class="tc-label">Model</div><div class="tc-value" id="modelUsed">—</div></div>
         <div class="telemetry-cell"><div class="tc-label">Latency</div><div class="tc-value" id="latencyMs">—</div></div>
         <div class="telemetry-cell"><div class="tc-label">Tokens</div><div class="tc-value" id="totalTokens">—</div></div>
       </div>
+
       <div class="settings-section">
         <div class="section-label">API usage</div>
         <pre id="apiUsage">{}</pre>
@@ -59,11 +71,23 @@
         <div class="section-label">Agent logs</div>
         <ul id="runtimeLogs" class="log-list"><li>No run yet.</li></ul>
       </div>
+
+      <!-- Provider diagnostics -->
       <div class="settings-section">
-        <div class="section-label">Diagnostics</div>
-        <div class="diag-buttons">
-          <button class="diag-btn" id="runOpenaiDiagnostics">Test OpenAI</button>
-          <button class="diag-btn" id="runCohereDiagnostics">Test Cohere</button>
+        <div class="section-label">Provider diagnostics</div>
+        <div class="provider-diag-grid">
+          <button class="diag-btn diag-active" id="runCohereDiagnostics">
+            <span class="diag-dot active"></span> Cohere
+          </button>
+          <button class="diag-btn" id="runOpenaiDiagnostics">
+            <span class="diag-dot"></span> OpenAI
+          </button>
+          <button class="diag-btn" id="runGeminiDiagnostics">
+            <span class="diag-dot"></span> Gemini
+          </button>
+          <button class="diag-btn" id="runClaudeDiagnostics">
+            <span class="diag-dot"></span> Claude
+          </button>
         </div>
         <pre id="aiDiagnostics">{}</pre>
       </div>

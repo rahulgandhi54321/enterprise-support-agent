@@ -289,21 +289,95 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 8px;
 }
 
-.diag-buttons { display: flex; gap: 8px; margin-bottom: 10px; }
+/* Active AI engine banner */
+.active-provider {
+  background: var(--accent-light);
+  border: 1px solid rgba(79,70,229,0.18);
+  border-radius: var(--r);
+  padding: 13px 14px;
+  margin-bottom: 4px;
+}
+
+.ap-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.ap-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.ap-badge {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+
+.ap-model {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface);
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-strong);
+}
+
+.ap-note {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Provider diagnostics grid */
+.provider-diag-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
 
 .diag-btn {
-  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
   border-radius: var(--r-sm);
   background: var(--surface-3);
   border: 1px solid var(--border-strong);
   color: var(--ink-2);
   font-weight: 600;
-  font-size: 12px;
+  font-size: 12.5px;
   cursor: pointer;
   transition: all var(--t) var(--ease);
 }
 
 .diag-btn:hover { background: var(--accent-light); color: var(--accent); border-color: rgba(79,70,229,0.25); }
+.diag-btn:disabled { opacity: 0.5; cursor: wait; }
+
+.diag-btn.diag-active {
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: rgba(79,70,229,0.25);
+}
+
+.diag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--subtle);
+  flex-shrink: 0;
+}
+
+.diag-dot.active { background: var(--green); box-shadow: 0 0 0 2px rgba(52,199,89,0.25); }
 
 pre {
   background: var(--surface-2);

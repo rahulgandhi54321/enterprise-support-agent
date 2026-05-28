@@ -366,7 +366,8 @@ function setLoading(on) {
 /* ─── Diagnostics ────────────────────────────────────────── */
 async function runDiagnostics(endpoint, buttonId) {
   const btn = $(buttonId);
-  const orig = btn.textContent;
+  if (!btn) return;
+  const origHTML = btn.innerHTML;
   btn.disabled = true;
   btn.textContent = "Checking…";
   setText("aiDiagnostics", `Running ${endpoint} diagnostics…`);
@@ -375,10 +376,10 @@ async function runDiagnostics(endpoint, buttonId) {
     const data = await res.json();
     setText("aiDiagnostics", pretty(data));
   } catch (e) {
-    setText("aiDiagnostics", `Failed: ${e.message}`);
+    setText("aiDiagnostics", `Error: ${e.message}`);
   } finally {
     btn.disabled = false;
-    btn.textContent = orig;
+    btn.innerHTML = origHTML;
   }
 }
 
@@ -473,8 +474,10 @@ document.addEventListener("keydown", (e) => {
 });
 
 // Diagnostics
-$("runOpenaiDiagnostics")?.addEventListener("click", () => runDiagnostics("openai", "runOpenaiDiagnostics"));
-$("runCohereDiagnostics")?.addEventListener("click", () => runDiagnostics("cohere", "runCohereDiagnostics"));
+$("runCohereDiagnostics")?.addEventListener("click", () => runDiagnostics("cohere",  "runCohereDiagnostics"));
+$("runOpenaiDiagnostics")?.addEventListener("click", () => runDiagnostics("openai",  "runOpenaiDiagnostics"));
+$("runGeminiDiagnostics")?.addEventListener("click", () => runDiagnostics("gemini",  "runGeminiDiagnostics"));
+$("runClaudeDiagnostics")?.addEventListener("click", () => runDiagnostics("claude",  "runClaudeDiagnostics"));
 
 // Jump to results (mobile)
 $("jumpToResults")?.addEventListener("click", () => {
