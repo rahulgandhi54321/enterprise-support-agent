@@ -117,10 +117,9 @@ def _usage_to_dict(usage: Any) -> Dict[str, Any]:
 
 
 async def analyze_support_request_safely(request: SupportRequest) -> SupportDecision:
-    provider = os.getenv("AI_PROVIDER", "openai").lower()
-    if provider == "cohere":
-        return await _analyze_cohere(request)
-    return await _analyze_openai(request)
+    # Cohere is the sole functional AI provider.
+    # OpenAI path is retained only for diagnostics; it is never invoked here.
+    return await _analyze_cohere(request)
 
 
 async def _analyze_openai(request: SupportRequest) -> SupportDecision:

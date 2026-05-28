@@ -3,220 +3,337 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FSZT Partners — Client Support</title>
+    <title>FSZT — AI Customer Success Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/app.css" />
   </head>
   <body>
-    <main class="shell">
-      <header class="masthead">
+
+    <!-- ── Header ─────────────────────────────────────── -->
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="topbar-logo">F</div>
         <div>
-          <p class="eyebrow">AI-First Consulting · Strategy That Ships</p>
-          <h1>FSZT Partner Support</h1>
+          <div class="topbar-name">AI Customer Success Agent</div>
+          <div class="topbar-sub">Powered by FSZT Partners · Strategy That Ships</div>
         </div>
-        <div class="top-right">
-          <div class="health-wrap">
-            <span class="pulse" aria-hidden="true"></span>
-            <div class="status" id="healthStatus">Checking API</div>
-          </div>
-          <button class="settings-button" id="settingsButton" type="button" aria-expanded="false" aria-controls="settingsPanel" title="Runtime telemetry">⚙</button>
-          <aside class="settings-panel" id="settingsPanel" hidden>
-            <div class="settings-head">
-              <div>
-                <p class="eyebrow">Runtime telemetry</p>
-                <h2>Live AI details</h2>
-              </div>
-              <button class="icon-button" id="closeSettings" type="button" title="Close">×</button>
-            </div>
-            <div class="settings-grid">
-              <div><span>AI status</span><strong id="aiStatus">Waiting</strong></div>
-              <div><span>Model</span><strong id="modelUsed">-</strong></div>
-              <div><span>Latency</span><strong id="latencyMs">-</strong></div>
-              <div><span>Total tokens</span><strong id="totalTokens">-</strong></div>
-            </div>
-            <section>
-              <h3>API usage</h3>
-              <pre id="apiUsage">{}</pre>
-            </section>
-            <section>
-              <h3>Runtime logs</h3>
-              <ul id="runtimeLogs" class="audit-list">
-                <li>No run yet.</li>
-              </ul>
-            </section>
-            <section>
-              <h3>AI diagnostics</h3>
-              <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
-                <button class="secondary" id="runOpenaiDiagnostics" type="button">Test OpenAI</button>
-                <button class="secondary" id="runCohereDiagnostics" type="button">Test Cohere</button>
-              </div>
-              <pre id="aiDiagnostics">{}</pre>
-            </section>
-          </aside>
+      </div>
+      <div class="topbar-right">
+        <div class="health-pill" id="healthPill">
+          <span class="health-dot" id="healthDot"></span>
+          <span id="healthStatus">Connecting</span>
         </div>
-      </header>
+        <button class="gear-btn" id="settingsButton" type="button" aria-expanded="false" aria-controls="settingsPanel" title="Runtime telemetry">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
 
-      <section class="workspace" aria-label="FSZT client support console">
-        <div class="request-pane">
-          <div class="panel-title">
-            <div>
-              <p class="eyebrow">Intake</p>
-              <h2>Incoming request</h2>
-            </div>
-            <span class="badge">Multi-channel</span>
+    <!-- ── Settings panel (body-level so position:fixed works on mobile) ── -->
+    <div class="settings-backdrop" id="settingsBackdrop" hidden></div>
+    <aside class="settings-panel" id="settingsPanel" hidden>
+      <div class="sheet-handle"></div>
+      <div class="settings-head">
+        <div>
+          <div class="settings-eyebrow">Runtime telemetry</div>
+          <div class="settings-title">Live AI details</div>
+        </div>
+        <button class="close-btn" id="closeSettings" type="button" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Active AI engine -->
+      <div class="active-provider">
+        <div class="ap-label">Active AI engine</div>
+        <div class="ap-row">
+          <span class="ap-badge">● Cohere</span>
+          <span class="ap-model">command-a-03-2025</span>
+        </div>
+        <p class="ap-note">Cohere powers all live agent runs. Other providers are available for diagnostics only.</p>
+      </div>
+
+      <!-- Last run telemetry -->
+      <div class="telemetry-grid">
+        <div class="telemetry-cell"><div class="tc-label">AI status</div><div class="tc-value" id="aiStatus">—</div></div>
+        <div class="telemetry-cell"><div class="tc-label">Model</div><div class="tc-value" id="modelUsed">—</div></div>
+        <div class="telemetry-cell"><div class="tc-label">Latency</div><div class="tc-value" id="latencyMs">—</div></div>
+        <div class="telemetry-cell"><div class="tc-label">Tokens</div><div class="tc-value" id="totalTokens">—</div></div>
+      </div>
+
+      <div class="settings-section">
+        <div class="section-label">API usage</div>
+        <pre id="apiUsage">{}</pre>
+      </div>
+      <div class="settings-section">
+        <div class="section-label">Agent logs</div>
+        <ul id="runtimeLogs" class="log-list"><li>No run yet.</li></ul>
+      </div>
+
+      <!-- Provider diagnostics -->
+      <div class="settings-section">
+        <div class="section-label">Provider diagnostics</div>
+        <div class="provider-diag-grid">
+          <button class="diag-btn diag-active" id="runCohereDiagnostics">
+            <span class="diag-dot active"></span> Cohere
+          </button>
+          <button class="diag-btn" id="runOpenaiDiagnostics">
+            <span class="diag-dot"></span> OpenAI
+          </button>
+          <button class="diag-btn" id="runGeminiDiagnostics">
+            <span class="diag-dot"></span> Gemini
+          </button>
+          <button class="diag-btn" id="runClaudeDiagnostics">
+            <span class="diag-dot"></span> Claude
+          </button>
+        </div>
+        <pre id="aiDiagnostics">{}</pre>
+      </div>
+    </aside>
+
+    <!-- ── Main workspace ─────────────────────────────── -->
+    <main class="workspace">
+
+      <!-- Left: Signal pane (pane-active = visible on mobile by default) -->
+      <section class="pane request-pane pane-active" id="paneRequest">
+        <div class="pane-header">
+          <div class="pane-title">
+            <div class="pane-eyebrow">Customer signal</div>
+            <h2>Incoming signal</h2>
           </div>
+          <span class="chip chip-outline">Multi-channel</span>
+        </div>
 
-          <form id="supportForm" class="form">
-            <div class="row">
-              <label>
-                Channel
-                <select id="channel" name="channel">
-                  <option value="email">Email</option>
-                  <option value="chat">Chat</option>
-                  <option value="crm_ticket">CRM ticket</option>
-                  <option value="whatsapp">WhatsApp</option>
-                  <option value="slack">Slack</option>
-                  <option value="support_portal">Support portal</option>
-                </select>
-              </label>
-
-              <label>
-                Client
-                <select id="customerId" name="customer_id">
-                  <option value="cli_enterprise_001">Sarah Chen — Universal Music Group</option>
-                  <option value="cli_growth_002">Dr. Marcus Reid — Remoni Health</option>
-                  <option value="cli_starter_003">Priya Nair — EduBridge Academy</option>
-                  <option value="">Unknown client</option>
-                </select>
-              </label>
-            </div>
-
-            <label>
-              Client message
-              <textarea id="message" name="message" rows="9">We received two invoices for engagement ORD-1001 this month and nobody has responded. Fix this today or we are escalating to legal.</textarea>
-            </label>
-
-            <div class="sample-strip" aria-label="Sample requests">
-              <button type="button" data-sample="billing">Billing dispute</button>
-              <button type="button" data-sample="technical">Labs outage</button>
-              <button type="button" data-sample="access">Course access</button>
-              <button type="button" data-sample="legal">Legal complaint</button>
-            </div>
-
-            <label>
-              Saved samples
-              <select id="backendSamples">
-                <option value="">Load a saved sample</option>
+        <form id="supportForm" class="form">
+          <div class="form-row">
+            <div class="field">
+              <label class="field-label" for="channel">Channel</label>
+              <select id="channel" name="channel" class="field-input">
+                <option value="email">📧 Email</option>
+                <option value="chat">💬 Chat</option>
+                <option value="crm_ticket">🎫 CRM ticket</option>
+                <option value="whatsapp">📱 WhatsApp</option>
+                <option value="slack">⚡ Slack</option>
+                <option value="support_portal">🖥 Support portal</option>
               </select>
-            </label>
-
-            <div class="actions">
-              <div class="mode-toggle" role="group" aria-label="Analysis mode">
-                <label><input type="radio" name="mode" value="analyze" checked /> Live AI</label>
-                <label><input type="radio" name="mode" value="triage-demo" /> Demo</label>
-              </div>
-              <button class="primary" type="submit" id="analyzeButton">Analyze request</button>
             </div>
-            <button id="jumpToResults" type="button" aria-label="Jump to results">↓ See Results</button>
-          </form>
-        </div>
-
-        <div class="decision-pane" aria-live="polite">
-          <div class="decision-header">
-            <div>
-              <p class="eyebrow">Ticket decision</p>
-              <h2 id="decisionTitle">Ready</h2>
+            <div class="field">
+              <label class="field-label" for="customerId">Account</label>
+              <select id="customerId" name="customer_id" class="field-input">
+                <option value="cli_enterprise_001">Sarah Chen · UMG</option>
+                <option value="cli_growth_002">Dr. Marcus Reid · Remoni</option>
+                <option value="cli_starter_003">Priya Nair · EduBridge</option>
+                <option value="">Unknown account</option>
+              </select>
             </div>
-            <div class="confidence">
-              <span id="confidenceValue">0%</span>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="message">Customer message</label>
+            <textarea id="message" name="message" class="field-input field-textarea">We received two invoices for engagement ORD-1001 this month and nobody has responded. Fix this today or we are escalating to legal and terminating the contract.</textarea>
+          </div>
+
+          <div class="sample-row">
+            <button type="button" class="sample-chip" data-sample="billing">💳 Billing concern</button>
+            <button type="button" class="sample-chip" data-sample="technical">⚡ Product issue</button>
+            <button type="button" class="sample-chip" data-sample="access">🔐 Onboarding blocker</button>
+            <button type="button" class="sample-chip" data-sample="legal">⚖️ Escalation</button>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="backendSamples">Saved scenarios</label>
+            <select id="backendSamples" class="field-input">
+              <option value="">Load a saved scenario…</option>
+            </select>
+          </div>
+
+          <div class="form-footer">
+            <div class="mode-toggle" role="group">
+              <label class="mode-option">
+                <input type="radio" name="mode" value="analyze" checked />
+                <span class="mode-label"><span class="mode-dot mode-dot-live"></span>Live AI agent</span>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="mode" value="triage-demo" />
+                <span class="mode-label"><span class="mode-dot mode-dot-demo"></span>Demo mode</span>
+              </label>
+            </div>
+            <button class="submit-btn" type="submit" id="analyzeButton">
+              <span class="submit-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </span>
+              <span id="submitLabel">Run AI agent</span>
+            </button>
+          </div>
+
+          <button id="jumpToResults" type="button" class="jump-btn" aria-label="View agent response">
+            View agent response ↓
+          </button>
+        </form>
+      </section>
+
+      <!-- Right: Agent response pane -->
+      <section class="pane decision-pane" id="paneDecision">
+
+        <!-- Decision header -->
+        <div class="decision-header">
+          <div class="decision-meta">
+            <div class="pane-eyebrow">Agent recommendation</div>
+            <h2 id="decisionTitle">Ready</h2>
+            <div class="category-badge" id="categoryBadge" style="display:none"></div>
+          </div>
+          <div class="confidence-ring-wrap">
+            <svg class="confidence-svg" viewBox="0 0 88 88" aria-hidden="true">
+              <circle class="ring-track" cx="44" cy="44" r="36"/>
+              <circle class="ring-fill" cx="44" cy="44" r="36" id="confidenceRing"/>
+            </svg>
+            <div class="confidence-label">
+              <span id="confidenceValue">—</span>
               <small>confidence</small>
             </div>
           </div>
-
-          <div class="metrics">
-            <div>
-              <span>Category</span>
-              <strong id="category">Awaiting input</strong>
-            </div>
-            <div>
-              <span>Priority</span>
-              <strong id="priority">-</strong>
-            </div>
-            <div>
-              <span>Sentiment</span>
-              <strong id="sentiment">-</strong>
-            </div>
-            <div>
-              <span>Escalation</span>
-              <strong id="escalation">-</strong>
-            </div>
-          </div>
-
-          <section class="output-section">
-            <h3>Suggested action</h3>
-            <p id="suggestedAction">Submit a request to see the operator recommendation.</p>
-          </section>
-
-          <section class="output-section reply">
-            <h3>Draft reply</h3>
-            <p id="draftReply">The client-facing reply will appear here.</p>
-          </section>
-
-          <section class="systems">
-            <div><span>CRM</span><strong id="crmSystem">Ready</strong></div>
-            <div><span>Engagements</span><strong id="orderSystem">Ready</strong></div>
-            <div><span>Policy</span><strong id="policySystem">Ready</strong></div>
-            <div><span>Audit</span><strong id="auditSystem">Ready</strong></div>
-          </section>
-
-          <section class="risk-grid">
-            <div><span>SLA risk</span><strong id="slaRisk">-</strong></div>
-            <div><span>Churn risk</span><strong id="churnRisk">-</strong></div>
-            <div><span>Enterprise</span><strong id="vipCustomer">-</strong></div>
-            <div><span>Fraud flags</span><strong id="fraudFlags">-</strong></div>
-          </section>
-
-          <section class="context-grid">
-            <div class="output-section">
-              <h3>Client context</h3>
-              <pre id="customerContext">{}</pre>
-            </div>
-            <div class="output-section">
-              <h3>Engagement context</h3>
-              <pre id="orderContext">{}</pre>
-            </div>
-            <div class="output-section">
-              <h3>Policy context</h3>
-              <pre id="policyContext">{}</pre>
-            </div>
-            <div class="output-section">
-              <h3>Internal notes</h3>
-              <p id="internalNotes">No internal notes yet.</p>
-            </div>
-          </section>
-
-          <section class="output-section">
-            <h3>Tool actions</h3>
-            <ul id="toolActions" class="tool-list">
-              <li>No tools run yet.</li>
-            </ul>
-          </section>
-
-          <section class="ops-grid">
-            <div class="output-section">
-              <h3>Operations summary</h3>
-              <pre id="opsSummary">{}</pre>
-            </div>
-            <div class="output-section">
-              <h3>Recent audit events</h3>
-              <ul id="auditEvents" class="audit-list">
-                <li>No audit events yet.</li>
-              </ul>
-            </div>
-          </section>
         </div>
+
+        <!-- Status badges -->
+        <div class="badge-row" id="badgeRow">
+          <span class="status-badge badge-neutral" id="badgePriority">Priority —</span>
+          <span class="status-badge badge-neutral" id="badgeSentiment">Sentiment —</span>
+          <span class="status-badge badge-neutral" id="badgeEscalation">Not escalated</span>
+        </div>
+
+        <!-- Success action -->
+        <div class="result-card">
+          <div class="result-card-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            Success action
+          </div>
+          <p class="result-text" id="suggestedAction">Run the AI agent to get a customer success recommendation.</p>
+        </div>
+
+        <!-- Customer response -->
+        <div class="result-card reply-card">
+          <div class="result-card-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Customer response draft
+          </div>
+          <p class="result-text reply-text" id="draftReply">The AI-drafted customer response will appear here.</p>
+        </div>
+
+        <!-- Health signals row -->
+        <div class="risk-row">
+          <div class="risk-cell" id="riskSla">
+            <div class="risk-icon">⏱</div>
+            <div class="risk-label">SLA risk</div>
+            <div class="risk-val" id="slaRisk">—</div>
+          </div>
+          <div class="risk-cell" id="riskChurn">
+            <div class="risk-icon">📉</div>
+            <div class="risk-label">Churn risk</div>
+            <div class="risk-val" id="churnRisk">—</div>
+          </div>
+          <div class="risk-cell" id="riskVip">
+            <div class="risk-icon">👑</div>
+            <div class="risk-label">Enterprise</div>
+            <div class="risk-val" id="vipCustomer">—</div>
+          </div>
+          <div class="risk-cell" id="riskFraud">
+            <div class="risk-icon">🔍</div>
+            <div class="risk-label">Risk flags</div>
+            <div class="risk-val" id="fraudFlags">—</div>
+          </div>
+        </div>
+
+        <!-- Data sources row -->
+        <div class="systems-row">
+          <div class="sys-cell"><div class="sys-dot" id="dotCrm"></div><span>CRM</span><strong id="crmSystem">Ready</strong></div>
+          <div class="sys-cell"><div class="sys-dot" id="dotOrder"></div><span>Account health</span><strong id="orderSystem">Ready</strong></div>
+          <div class="sys-cell"><div class="sys-dot" id="dotPolicy"></div><span>CS Playbook</span><strong id="policySystem">Ready</strong></div>
+          <div class="sys-cell"><div class="sys-dot" id="dotAudit"></div><span>Activity log</span><strong id="auditSystem">Ready</strong></div>
+        </div>
+
+        <!-- CS team notes -->
+        <div class="result-card">
+          <div class="result-card-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            CS team notes
+          </div>
+          <p class="result-text muted" id="internalNotes">No notes yet.</p>
+        </div>
+
+        <!-- Agent playbook -->
+        <div class="result-card">
+          <div class="result-card-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Agent playbook
+          </div>
+          <ul id="toolActions" class="tool-timeline"><li class="tl-empty">Agent steps will appear here after a run.</li></ul>
+        </div>
+
+        <!-- Context grid -->
+        <div class="context-grid">
+          <div class="result-card">
+            <div class="result-card-label">Account profile</div>
+            <pre id="customerContext">{}</pre>
+          </div>
+          <div class="result-card">
+            <div class="result-card-label">Engagement data</div>
+            <pre id="orderContext">{}</pre>
+          </div>
+          <div class="result-card">
+            <div class="result-card-label">CS playbook match</div>
+            <pre id="policyContext">{}</pre>
+          </div>
+          <div class="result-card">
+            <div class="result-card-label">Operations summary</div>
+            <pre id="opsSummary">{}</pre>
+          </div>
+        </div>
+
+        <!-- Activity feed -->
+        <div class="result-card">
+          <div class="result-card-label">Recent activity log</div>
+          <ul id="auditEvents" class="audit-feed"><li class="tl-empty">No activity yet.</li></ul>
+        </div>
+
       </section>
-      <footer class="creator">FSZT Partners Inc. &nbsp;·&nbsp; Strategy That Ships &nbsp;·&nbsp; <a href="mailto:hello@fszt.partners">hello@fszt.partners</a></footer>
     </main>
+
+    <!-- ── Mobile bottom nav ──────────────────────────── -->
+    <nav class="mobile-nav" aria-label="Navigation">
+      <button class="mobile-tab active" data-pane="request" id="tabRequest">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Signal
+      </button>
+      <button class="mobile-tab" data-pane="decision" id="tabDecision">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Response
+      </button>
+    </nav>
+
+    <!-- ── Footer ─────────────────────────────────────── -->
+    <footer class="site-footer">
+      <div class="footer-left">
+        <span>Built by</span>
+        <strong>Rahul Gandhi</strong>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/rahulgandhi54321" target="_blank" rel="noopener" class="footer-link" title="GitHub">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+        <a href="https://www.linkedin.com/in/rahul-gandhi-72b9181a7/" onclick="openLinkedIn(event)" class="footer-link" title="LinkedIn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          LinkedIn
+        </a>
+        <a href="https://rahulgandhi54321.github.io/Rahulgandhi-PM-portfolio/" target="_blank" rel="noopener" class="footer-link" title="Portfolio">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Portfolio
+        </a>
+      </div>
+    </footer>
+
     <script src="/app.js"></script>
   </body>
 </html>

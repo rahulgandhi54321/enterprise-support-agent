@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 import cohere
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from openai import OpenAI, OpenAIError
 
 from support_operator.audit import read_recent_actions
@@ -26,9 +26,9 @@ app = FastAPI(title="Enterprise Support Operator", version="0.2.0")
 ROOT = Path(__file__).resolve().parent
 
 
-@app.get("/", response_class=FileResponse)
-def console() -> FileResponse:
-    return FileResponse(ROOT / "static" / "index.html")
+@app.get("/", response_class=HTMLResponse)
+def console() -> HTMLResponse:
+    return HTMLResponse(content=(ROOT / "static" / "index.html").read_text(encoding="utf-8"))
 
 
 @app.get("/app.css", response_class=FileResponse)
@@ -66,10 +66,9 @@ def ops_summary() -> Dict[str, Any]:
     for record in actions:
         action = str(record.get("action", "unknown"))
         counts[action] = counts.get(action, 0) + 1
-    provider = os.getenv("AI_PROVIDER", "openai").lower()
     return {
-        "ai_provider": provider,
-        "model": COHERE_MODEL if provider == "cohere" else (OPENAI_FALLBACKS[0] if OPENAI_FALLBACKS else "gpt-4.1-mini"),
+        "ai_provider": "cohere",
+        "model": COHERE_MODEL,
         "actions_logged": len(actions),
         "tool_counts": counts,
         "mode": "prototype",
@@ -165,6 +164,36 @@ async def cohere_diagnostics() -> Dict[str, Any]:
         result["next_steps"] = ["Check COHERE_API_KEY in .env.local.", "Check dashboard.cohere.com for account status."]
 
     return result
+
+
+@app.get("/ops/gemini-diagnostics")
+def gemini_diagnostics() -> Dict[str, Any]:
+    return {
+        "provider": "gemini",
+        "status": "not_configured",
+        "model": "gemini-2.0-flash",
+        "message": "Gemini is not wired into the agent. Add GEMINI_API_KEY to enable.",
+        "next_steps": [
+            "Get an API key at aistudio.google.com.",
+            "Add GEMINI_API_KEY to .env.local.",
+            "Implement _analyze_gemini route in agent.py when ready.",
+        ],
+    }
+
+
+@app.get("/ops/claude-diagnostics")
+def claude_diagnostics() -> Dict[str, Any]:
+    return {
+        "provider": "claude",
+        "status": "not_configured",
+        "model": "claude-opus-4-5",
+        "message": "Claude is not wired into the agent. Add ANTHROPIC_API_KEY to enable.",
+        "next_steps": [
+            "Get an API key at console.anthropic.com.",
+            "Add ANTHROPIC_API_KEY to .env.local.",
+            "Implement _analyze_claude route in agent.py when ready.",
+        ],
+    }
 
 
 @app.post("/analyze", response_model=SupportDecision)

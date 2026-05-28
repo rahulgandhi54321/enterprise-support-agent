@@ -4,12 +4,12 @@
     "customer_id": "cli_enterprise_001",
     "message": "We received two invoices for engagement ORD-1001 this month and nobody has responded to my emails. Fix this today or we are escalating to our legal team and terminating the contract."
   },
-  "labs_technical": {
+  "product_incident": {
     "channel": "chat",
     "customer_id": "cli_growth_002",
-    "message": "The AI-First Call Center agent your team deployed is throwing a 500 error on every inbound call routing request. Our contact centre is blocked. This needs to be resolved immediately."
+    "message": "The AI-First Call Center agent your team deployed is throwing a 500 error on every inbound call routing request. Our contact centre is completely blocked. This needs to be resolved immediately."
   },
-  "course_access": {
+  "onboarding_blocker": {
     "channel": "whatsapp",
     "customer_id": "cli_starter_003",
     "message": "I lost access to the AI Native Consultants course portal after our company switched SSO providers. I need this restored urgently — our cohort starts tomorrow."
