@@ -62,6 +62,7 @@ body {
     radial-gradient(ellipse 60% 40% at 80% 110%, rgba(124,58,237,0.07) 0%, transparent 60%);
   min-height: 100dvh;
   padding-bottom: env(safe-area-inset-bottom);
+  overflow-x: hidden;
 }
 
 button, select, textarea, input { font: inherit; }
@@ -296,8 +297,11 @@ pre {
   line-height: 1.5;
   color: var(--ink-2);
   white-space: pre-wrap;
-  overflow: auto;
+  word-break: break-all;
+  overflow-x: hidden;
+  overflow-y: auto;
   max-height: 160px;
+  max-width: 100%;
   margin: 0;
 }
 
@@ -336,9 +340,14 @@ pre {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   padding: 24px;
-  display: flex;
+  display: flex;        /* always flex on desktop */
   flex-direction: column;
   gap: 18px;
+}
+
+/* On desktop/tablet, both panes must always be visible regardless of pane-active class */
+@media (min-width: 769px) {
+  .pane { display: flex !important; }
 }
 
 .pane-header {
@@ -863,7 +872,6 @@ select.field-input {
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border-strong);
   padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
-  display: none;
   gap: 8px;
 }
 
@@ -951,58 +959,123 @@ body::before {
     padding: 14px;
   }
 
-  .risk-row, .systems-row { grid-template-columns: repeat(2, 1fr); }
+  .risk-row     { grid-template-columns: repeat(2, 1fr); }
+  .systems-row  { grid-template-columns: repeat(2, 1fr); }
   .context-grid { grid-template-columns: 1fr; }
 }
 
 /* ─── Mobile: ≤ 768px ────────────────────────────────────── */
 @media (max-width: 768px) {
-  .topbar { padding: 0 16px; height: 56px; }
-  .topbar-sub { display: none; }
 
+  /* ── Topbar ── */
+  .topbar {
+    padding: 0 12px;
+    height: 56px;
+    gap: 8px;
+  }
+
+  .topbar-sub   { display: none; }
+  .topbar-name  { font-size: 13.5px; }
+
+  .topbar-brand { gap: 9px; }
+  .topbar-logo  { width: 32px; height: 32px; font-size: 16px; border-radius: 9px; }
+
+  /* Hide the health-pill text label; keep dot only */
+  .health-pill  { padding: 5px 9px; gap: 5px; font-size: 11px; }
+
+  /* ── Workspace ── */
   .workspace {
-    grid-template-columns: 1fr;
+    display: block;          /* single column, no grid gap tricks */
     padding: 10px 10px 0;
-    gap: 0;
     min-height: unset;
   }
 
+  /* ── Pane switching ── */
   .pane {
+    display: none;           /* hidden by default */
     border-radius: var(--r-lg);
-    padding: 18px;
-    gap: 14px;
+    padding: 16px;
+    gap: 12px;
+    /* each active pane scrolls independently */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* fill the space between topbar and mobile nav */
+    min-height: calc(100dvh - 56px - 72px - 20px);
+    /* bottom padding so last card isn't hidden under nav */
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
   }
 
-  /* Mobile tab switching */
-  .pane { display: none; }
   .pane.pane-active { display: flex; }
 
+  /* ── Bottom nav & jump ── */
   .mobile-nav { display: flex; }
+  .jump-btn   { display: block; }
 
-  .jump-btn { display: block; }
-
-  /* Form adjustments */
+  /* ── Form row: stack vertically ── */
   .form-row { grid-template-columns: 1fr; gap: 10px; }
 
-  .form-footer { flex-direction: column; align-items: stretch; gap: 10px; }
+  .field-textarea { min-height: 120px; }
 
-  .mode-toggle { justify-content: center; }
+  /* ── Form footer: stack cleanly ── */
+  .form-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
 
-  .submit-btn { width: 100%; justify-content: center; font-size: 15px; padding: 14px; }
+  .mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
 
-  .field-textarea { min-height: 130px; }
+  .mode-label {
+    justify-content: center;
+    font-size: 12px;
+    padding: 8px 10px;
+  }
 
-  /* Decision adjustments */
-  .decision-header { flex-direction: row; align-items: center; }
+  .submit-btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 15px;
+    padding: 14px;
+  }
 
-  .confidence-ring-wrap { width: 76px; height: 76px; }
-  .confidence-svg { width: 76px; height: 76px; }
-  .confidence-label span { font-size: 15px; }
+  /* ── Decision header ── */
+  .decision-header { align-items: center; }
 
-  .risk-row, .systems-row { grid-template-columns: repeat(2, 1fr); }
-  .context-grid { grid-template-columns: 1fr; }
+  .confidence-ring-wrap { width: 72px; height: 72px; flex-shrink: 0; }
+  .confidence-svg       { width: 72px; height: 72px; }
+  .confidence-label span { font-size: 14px; }
 
-  /* Settings panel full-width bottom sheet */
+  /* ── Risk & systems: 2-up grids ── */
+  .risk-row    { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .systems-row { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+
+  .risk-cell  { padding: 10px 8px; }
+  .risk-icon  { font-size: 16px; }
+  .risk-label { font-size: 9px; }
+  .risk-val   { font-size: 11.5px; }
+
+  .sys-cell span  { font-size: 9px; }
+  .sys-cell strong { font-size: 10.5px; }
+
+  /* ── Context grid: single column ── */
+  .context-grid { grid-template-columns: 1fr; gap: 8px; }
+
+  /* ── Badge row: allow wrapping ── */
+  .badge-row { gap: 6px; }
+
+  .status-badge { font-size: 11px; padding: 4px 10px; }
+
+  /* ── Result cards ── */
+  .result-card  { padding: 12px 14px; }
+
+  /* ── Audit feed ── */
+  .audit-feed li { flex-direction: column; align-items: flex-start; gap: 2px; }
+
+  /* ── Settings panel: full-width bottom sheet ── */
   .settings-panel {
     position: fixed;
     top: auto;
@@ -1016,12 +1089,33 @@ body::before {
     padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
   }
 
+  /* ── Footer ── */
   .site-footer {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 16px 16px calc(88px + env(safe-area-inset-bottom));
+    padding: 16px 16px calc(84px + env(safe-area-inset-bottom));
+    gap: 12px;
   }
+
+  .footer-links { justify-content: center; }
+}
+
+/* ─── XS: ≤ 390px (small phones) ────────────────────────── */
+@media (max-width: 390px) {
+  .topbar-name { font-size: 12.5px; }
+  .topbar-logo { width: 28px; height: 28px; font-size: 14px; }
+
+  .health-pill { display: none; } /* hide entirely on tiny screens */
+
+  .pane { padding: 14px 12px; }
+
+  .sample-chip { font-size: 11.5px; padding: 6px 11px; }
+
+  .submit-btn { font-size: 14px; padding: 13px; }
+
+  .risk-row    { grid-template-columns: repeat(2, 1fr); }
+  .systems-row { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ─── Animations ─────────────────────────────────────────── */
@@ -1030,7 +1124,10 @@ body::before {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.pane.pane-active { animation: fadeIn 0.2s var(--ease); }
+/* Only animate when pane becomes visible */
+@media (max-width: 768px) {
+  .pane.pane-active { animation: fadeIn 0.18s var(--ease); }
+}
 
 .result-card, .risk-cell, .sys-cell {
   animation: fadeIn 0.25s var(--ease) both;

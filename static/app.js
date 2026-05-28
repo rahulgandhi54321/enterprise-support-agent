@@ -373,12 +373,14 @@ async function runDiagnostics(endpoint, buttonId) {
 
 /* ─── Mobile tab switching ───────────────────────────────── */
 function switchPane(name) {
+  // Only do tab switching on mobile — on desktop both panes are always visible
+  if (window.innerWidth > 768) return;
   document.querySelectorAll(".pane").forEach((p) => p.classList.remove("pane-active"));
   document.querySelectorAll(".mobile-tab").forEach((t) => t.classList.remove("active"));
   const pane = name === "request" ? $("paneRequest") : $("paneDecision");
-  const tab = name === "request" ? $("tabRequest") : $("tabDecision");
-  if (pane) pane.classList.add("pane-active");
-  if (tab) tab.classList.add("active");
+  const tab  = name === "request" ? $("tabRequest")  : $("tabDecision");
+  if (pane) { pane.classList.add("pane-active"); pane.scrollTop = 0; }
+  if (tab)  tab.classList.add("active");
 }
 
 /* ─── Settings panel ─────────────────────────────────────── */
@@ -484,10 +486,19 @@ if (form) {
 
 /* ─── Init ───────────────────────────────────────────────── */
 
-// On mobile, show request pane by default
-if (window.innerWidth <= 768) {
-  switchPane("request");
+// Initialise the correct tab state on mobile
+function initPanes() {
+  if (window.innerWidth <= 768) {
+    // Make sure request pane and tab are both active
+    document.querySelectorAll(".mobile-tab").forEach((t) => t.classList.remove("active"));
+    const tabReq = $("tabRequest");
+    if (tabReq) tabReq.classList.add("active");
+    // paneRequest already has pane-active in HTML; just make sure decision doesn't
+    const dec = $("paneDecision");
+    if (dec) dec.classList.remove("pane-active");
+  }
 }
+initPanes();
 
 injectSvgDefs();
 checkHealth();
